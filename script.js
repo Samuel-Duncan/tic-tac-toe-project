@@ -19,11 +19,13 @@ const Gameboard = (() => {
 })();
 
 const Gameplay = (() => {
-  const playerX = Player('Player 1', 'X');
-  const playerO = Player('Player 2', 'O');
+  const playerX = Player('Player X', 'X');
+  const playerO = Player('Player O', 'O');
   const players = [playerX, playerO];
   let activePlayer = players[0];
   let activePlayerMarker = activePlayer.marker;
+  const winningCells = [[0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -61,8 +63,10 @@ const Display = (() => {
     const row = clickedCell.getAttribute('data-row');
     const column = clickedCell.getAttribute('data-column');
     const activePlayerMarker = Gameplay.getActivePlayerMarker();
-    board[row][column] = activePlayerMarker;
-    clickedCell.textContent = activePlayerMarker;
-    Gameplay.switchPlayerTurn();
+    if (clickedCell.textContent === '') {
+      board[row][column] = activePlayerMarker;
+      clickedCell.textContent = board[row][column];
+      Gameplay.switchPlayerTurn();
+    }
   }
 })();
