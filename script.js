@@ -23,12 +23,18 @@ const Gameplay = (() => {
   const playerO = Player('Player 2', 'O');
   const players = [playerX, playerO];
   let activePlayer = players[0];
+  let activePlayerMarker = activePlayer.marker;
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
+    activePlayerMarker = activePlayerMarker === players[0].marker ? players[1].marker : players[0].marker;
   };
 
   const getActivePlayer = () => activePlayer;
+
+  const getActivePlayerMarker = () => activePlayerMarker;
+
+  return { switchPlayerTurn, getActivePlayer, getActivePlayerMarker };
 })();
 
 const Display = (() => {
@@ -46,6 +52,17 @@ const Display = (() => {
       cell.setAttribute('data-row', i);
       cell.setAttribute('data-column', j);
       container.appendChild(cell);
+      cell.addEventListener('click', handleClick);
     }
+  }
+
+  function handleClick(event) {
+    const clickedCell = event.target;
+    const row = clickedCell.getAttribute('data-row');
+    const column = clickedCell.getAttribute('data-column');
+    const activePlayerMarker = Gameplay.getActivePlayerMarker();
+    board[row][column] = activePlayerMarker;
+    clickedCell.textContent = activePlayerMarker;
+    Gameplay.switchPlayerTurn();
   }
 })();
