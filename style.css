@@ -38,3 +38,8 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+#restart {
+  background-color: rgb(186, 20, 20);
+  color: white;
+}

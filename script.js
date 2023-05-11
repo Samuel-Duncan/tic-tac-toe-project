@@ -5,17 +5,21 @@ const Gameboard = (() => {
   const columns = 3;
   const board = [];
 
-  for (let i = 0; i < rows; i++) {
-    board[i] = [];
-    for (let j = 0; j < columns; j++) {
-      board[i].push('');
+  const resetBoard = () => {
+    for (let i = 0; i < rows; i++) {
+      board[i] = [];
+      for (let j = 0; j < columns; j++) {
+        board[i].push('');
+      }
     }
-  }
+  };
+
+  resetBoard();
 
   const getBoard = () => board;
   const getRowsAndColumns = () => [rows, columns];
 
-  return { getBoard, getRowsAndColumns };
+  return { getBoard, getRowsAndColumns, resetBoard };
 })();
 
 const Gameplay = (() => {
@@ -23,20 +27,45 @@ const Gameplay = (() => {
   const playerO = Player('Player O', 'O');
   const players = [playerX, playerO];
   let activePlayer = players[0];
-  let activePlayerMarker = activePlayer.marker;
-  const winningCells = [[0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  const board = Gameboard.getBoard();
+
+  const checkForWinner = () => {
+    const winningCombinations = [
+      // Rows
+      [board[0][0], board[0][1], board[0][2]],
+      [board[1][0], board[1][1], board[1][2]],
+      [board[2][0], board[2][1], board[2][2]],
+      // Columns
+      [board[0][0], board[1][0], board[2][0]],
+      [board[0][1], board[1][1], board[2][1]],
+      [board[0][2], board[1][2], board[2][2]],
+      // Diagonals
+      [board[0][0], board[1][1], board[2][2]],
+      [board[0][2], board[1][1], board[2][0]],
+    ];
+
+    const isX = (marker) => marker === 'X';
+    const isO = (marker) => marker === 'O';
+    // eslint-disable-next-line max-len
+    const winnerX = winningCombinations.some((combination) => combination.every((marker) => isX(marker)));
+    // eslint-disable-next-line max-len
+    const winnerO = winningCombinations.some((combination) => combination.every((marker) => isO(marker)));
+    const winner = [winnerX, winnerO];
+
+    return winner;
+  };
+
+  const checkForTie = () => board.every((element) => element.every((marker) => marker !== ''));
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
-    activePlayerMarker = activePlayerMarker === players[0].marker ? players[1].marker : players[0].marker;
   };
 
   const getActivePlayer = () => activePlayer;
 
-  const getActivePlayerMarker = () => activePlayerMarker;
-
-  return { switchPlayerTurn, getActivePlayer, getActivePlayerMarker };
+  return {
+    switchPlayerTurn, getActivePlayer, checkForWinner, checkForTie,
+  };
 })();
 
 const Display = (() => {
@@ -44,6 +73,8 @@ const Display = (() => {
   const columns = Gameboard.getRowsAndColumns()[1];
   const board = Gameboard.getBoard();
   const container = document.getElementById('gameboard');
+  const winnerDisplay = document.createElement('div');
+  const restartButton = document.getElementById('restart');
 
   // Render the board to the DOM
   for (let i = 0; i < rows; i++) {
@@ -58,15 +89,57 @@ const Display = (() => {
     }
   }
 
+  function displayWinner() {
+    winnerDisplay.textContent = `${Gameplay.getActivePlayer().name} is the winner!`;
+    container.appendChild(winnerDisplay);
+  }
+
+  function clearWinner() {
+    winnerDisplay.textContent = '';
+  }
+
+  function displayTie() {
+    winnerDisplay.textContent = 'It\'s a tie! Play again!';
+    container.appendChild(winnerDisplay);
+  }
+
   function handleClick(event) {
     const clickedCell = event.target;
     const row = clickedCell.getAttribute('data-row');
     const column = clickedCell.getAttribute('data-column');
-    const activePlayerMarker = Gameplay.getActivePlayerMarker();
+    const activePlayerMarker = Gameplay.getActivePlayer().marker;
+
     if (clickedCell.textContent === '') {
       board[row][column] = activePlayerMarker;
       clickedCell.textContent = board[row][column];
+      const onWin = Gameplay.checkForWinner().some((win) => win === true);
+      if (onWin) {
+        Gameplay.checkForWinner();
+        displayWinner();
+      }
+      if (Gameplay.checkForTie()) {
+        displayTie();
+      }
+      if (onWin && Gameplay.checkForTie()) {
+        Gameplay.checkForWinner();
+        displayWinner();
+        Gameplay.switchPlayerTurn();
+      }
       Gameplay.switchPlayerTurn();
     }
   }
+
+  const restartGame = () => {
+    const cells = document.querySelectorAll('.cell');
+    Gameboard.resetBoard();
+    clearWinner();
+    cells.forEach((cell) => {
+      cell.textContent = '';
+    });
+    Gameplay.switchPlayerTurn();
+  };
+
+  restartButton.addEventListener('click', restartGame);
+
+  return { clearWinner, restartButton };
 })();
