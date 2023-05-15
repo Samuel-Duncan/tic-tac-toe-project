@@ -10,12 +10,14 @@ body {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 50px;
 }
 
 #buttons {
   display: flex;
-  gap: 25px;
+}
+
+.hide-display {
+  display: none;
 }
 
 #gameboard {
@@ -39,7 +41,13 @@ body {
   justify-content: center;
 }
 
-#restart {
+#restart, #start, .submit {
   background-color: rgb(186, 20, 20);
+  color: white;
+}
+
+#form-container {
+  position: absolute;
+  background-color: black;
   color: white;
 }

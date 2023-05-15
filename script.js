@@ -23,10 +23,8 @@ const Gameboard = (() => {
 })();
 
 const Gameplay = (() => {
-  const playerX = Player('Player X', 'X');
-  const playerO = Player('Player O', 'O');
-  const players = [playerX, playerO];
-  let activePlayer = players[0];
+  const players = [];
+  let activePlayer;
   const board = Gameboard.getBoard();
 
   const checkForWinner = () => {
@@ -57,14 +55,10 @@ const Gameplay = (() => {
 
   const checkForTie = () => board.every((element) => element.every((marker) => marker !== ''));
 
-  const switchPlayerTurn = () => {
-    activePlayer = activePlayer === players[0] ? players[1] : players[0];
-  };
-
-  const getActivePlayer = () => activePlayer;
+  let switchPlayerTurn;
 
   return {
-    switchPlayerTurn, getActivePlayer, checkForWinner, checkForTie,
+    switchPlayerTurn, checkForWinner, checkForTie, players, activePlayer,
   };
 })();
 
@@ -73,9 +67,33 @@ const Display = (() => {
   const columns = Gameboard.getRowsAndColumns()[1];
   const board = Gameboard.getBoard();
   const container = document.getElementById('gameboard');
-  const winnerDisplay = document.createElement('div');
+  const winnerDisplay = document.querySelector('.displayWinner');
   const restartButton = document.getElementById('restart');
+  const startButton = document.getElementById('start');
+  const formContainer = document.getElementById('form-container');
+  const form = document.querySelector('form');
 
+  // NEEDS WORK
+  const getPlayerNames = () => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      Gameplay.players = [];
+      restartGame();
+      const player1Name = form.player1.value;
+      const player2Name = form.player2.value;
+      // Create a new instance of Player using the form values
+
+      // Add the new player to the players array in the Gameplay module
+      Gameplay.players.push(Player(player1Name, 'X'));
+      Gameplay.players.push(Player(player2Name, 'O'));
+      [Gameplay.activePlayer] = Gameplay.players;
+      Gameplay.switchPlayerTurn = () => {
+        Gameplay.activePlayer = Gameplay.activePlayer === Gameplay.players[0] ? Gameplay.players[1] : Gameplay.players[0];
+      };
+      formContainer.classList.toggle('hide-display');
+    });
+  };
+  getPlayerNames();
   // Render the board to the DOM
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < columns; j++) {
@@ -90,8 +108,7 @@ const Display = (() => {
   }
 
   function displayWinner() {
-    winnerDisplay.textContent = `${Gameplay.getActivePlayer().name} is the winner!`;
-    container.appendChild(winnerDisplay);
+    winnerDisplay.textContent = `${Gameplay.activePlayer.name} is the winner!`;
   }
 
   function clearWinner() {
@@ -100,17 +117,15 @@ const Display = (() => {
 
   function displayTie() {
     winnerDisplay.textContent = 'It\'s a tie! Play again!';
-    container.appendChild(winnerDisplay);
   }
 
   function handleClick(event) {
     const clickedCell = event.target;
     const row = clickedCell.getAttribute('data-row');
     const column = clickedCell.getAttribute('data-column');
-    const activePlayerMarker = Gameplay.getActivePlayer().marker;
 
     if (clickedCell.textContent === '') {
-      board[row][column] = activePlayerMarker;
+      board[row][column] = Gameplay.activePlayer.marker;
       clickedCell.textContent = board[row][column];
       const onWin = Gameplay.checkForWinner().some((win) => win === true);
       if (onWin) {
@@ -123,11 +138,15 @@ const Display = (() => {
       if (onWin && Gameplay.checkForTie()) {
         Gameplay.checkForWinner();
         displayWinner();
-        Gameplay.switchPlayerTurn();
       }
       Gameplay.switchPlayerTurn();
     }
   }
+
+  const startGame = () => {
+    formContainer.classList.toggle('hide-display');
+    restartGame();
+  };
 
   const restartGame = () => {
     const cells = document.querySelectorAll('.cell');
@@ -136,10 +155,12 @@ const Display = (() => {
     cells.forEach((cell) => {
       cell.textContent = '';
     });
-    Gameplay.switchPlayerTurn();
   };
 
+  startButton.addEventListener('click', startGame);
   restartButton.addEventListener('click', restartGame);
 
-  return { clearWinner, restartButton };
+  return {
+    clearWinner,
+  };
 })();
